@@ -306,6 +306,7 @@ def main() -> None:
         run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Clean")
         run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Decision_Log")
         run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Benchmarks")
+        run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Checks")
 
         # Raw is imported directly from the unchanged source CSV.
         run("import", str(OUTPUT_XLSX), "/Raw", "--file", str(SOURCE_CSV), "--header")
@@ -400,12 +401,97 @@ def main() -> None:
     run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", "ref=A1:M8", "--prop", "name=BenchmarkSummary", "--prop", "displayName=BenchmarkSummary", "--prop", "style=medium2")
     run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", f"ref=A12:E{12 + len(positions)}", "--prop", "name=MaxVerticalByPosition", "--prop", "displayName=MaxVerticalByPosition", "--prop", "style=light2")
 
+    # Checks are formula-only controls for every workbook rule in AGENTS.md,
+    # plus one control for each era block used by the Benchmarks formulas.
+    checks_operations: list[dict] = []
+    check_headers = ["Check", "Result", "What it tests"]
+    for column_letter, value in zip(("A", "B", "C"), check_headers):
+        checks_operations.append({
+            "command": "set",
+            "path": f"/Checks/{column_letter}1",
+            "props": {"value": value},
+        })
+
+    log_last_row = len(log_rows) + 1
+    check_specs = [
+        (
+            "Clean rows equal Raw rows minus logged removals",
+            f"COUNTA(Clean!$A$2:$A$1750)=COUNTA(Raw!$A$2:$A$1750)-SUM(Decision_Log!$E$2:$E${log_last_row})",
+            "Rows in Clean equal rows in Raw minus every removal in Decision_Log.",
+        ),
+        (
+            "No weight or shuttle is 0",
+            "AND(COUNT(Clean!$E$2:$E$1750)>0,MIN(Clean!$E$2:$E$1750)>0,COUNT(Clean!$O$2:$O$1750)>0,MIN(Clean!$O$2:$O$1750)>0)",
+            "No WGT and no SHUTTLE value in Clean is zero.",
+        ),
+        (
+            "Every BAR value is between 0.97 and 1.18",
+            "AND(COUNT(Clean!$V$2:$V$1750)>0,MIN(Clean!$V$2:$V$1750)>=0.97,MAX(Clean!$V$2:$V$1750)<=1.18)",
+            "The numeric BAR_NUM values satisfy the brief's inclusive range.",
+        ),
+        (
+            "Every Clean row has a primary position and an era",
+            "AND(COUNTA(Clean!$W$2:$W$1750)=COUNTA(Clean!$A$2:$A$1750),COUNTA(Clean!$X$2:$X$1750)=COUNTA(Clean!$A$2:$A$1750))",
+            "PRIMARY_POS and ERA are populated on every Clean row.",
+        ),
+    ]
+
+    for row_number, (label, formula, description) in enumerate(check_specs, start=2):
+        for column_letter, value in zip(("A", "C"), (label, description)):
+            checks_operations.append({
+                "command": "set",
+                "path": f"/Checks/{column_letter}{row_number}",
+                "props": {"value": value},
+            })
+        checks_operations.append({
+            "command": "set",
+            "path": f"/Checks/B{row_number}",
+            "props": {"formula": formula},
+        })
+
+    def era_block_check(era: str) -> str:
+        first_row, last_row = era_ranges[era]
+        return "AND(" + ",".join([
+            f'Clean!$X${first_row}="{era}"',
+            f'Clean!$X${last_row}="{era}"',
+            f'COUNTA(Clean!$X${first_row}:$X${last_row})=COUNTIF(Clean!$X$2:$X$1750,"{era}")',
+        ]) + ")"
+
+    era_checks = [
+        (
+            "Benchmarks 2000-2004 block reads exactly the 2000-2004 rows",
+            era_block_check("2000-2004"),
+            "The D:H benchmark block matches the Clean rows whose ERA is 2000-2004.",
+        ),
+        (
+            "Benchmarks 2022-2026 block reads exactly the 2022-2026 rows",
+            era_block_check("2022-2026"),
+            "The I:M benchmark block matches the Clean rows whose ERA is 2022-2026.",
+        ),
+    ]
+    for row_number, (label, formula, description) in enumerate(era_checks, start=2 + len(check_specs)):
+        for column_letter, value in zip(("A", "C"), (label, description)):
+            checks_operations.append({
+                "command": "set",
+                "path": f"/Checks/{column_letter}{row_number}",
+                "props": {"value": value},
+            })
+        checks_operations.append({
+            "command": "set",
+            "path": f"/Checks/B{row_number}",
+            "props": {"formula": formula},
+        })
+
+    run_batch(checks_operations)
+    run("add", str(OUTPUT_XLSX), "/Checks", "--type", "table", "--prop", f"ref=A1:C{1 + len(check_specs) + len(era_checks)}", "--prop", "name=ChecksData", "--prop", "displayName=ChecksData", "--prop", "style=light2")
+
     # Formatting and print setup. Values remain unchanged by these commands.
     widths = {
         "Raw": {"A": 10, "B": 24, "C": 10, "D": 10, "E": 10, "F": 10, "G": 10, "H": 12, "I": 12, "J": 10, "K": 10, "L": 12, "M": 12, "N": 10, "O": 10, "P": 10, "Q": 10, "R": 10, "S": 10, "T": 12, "U": 12},
         "Clean": {"A": 10, "B": 24, "C": 12, "D": 10, "E": 10, "F": 10, "G": 10, "H": 12, "I": 12, "J": 10, "K": 10, "L": 12, "M": 12, "N": 10, "O": 10, "P": 10, "Q": 10, "R": 10, "S": 10, "T": 12, "U": 12, "V": 12, "W": 16, "X": 12},
         "Decision_Log": {"A": 42, "B": 48, "C": 14, "D": 14, "E": 14, "F": 72, "G": 14},
         "Benchmarks": {"A": 24, "B": 20, "C": 20, "D": 20, "E": 20, "F": 16, "G": 16, "H": 16, "I": 16, "J": 16, "K": 16, "L": 16, "M": 16},
+        "Checks": {"A": 58, "B": 12, "C": 82},
     }
     for sheet, columns in widths.items():
         run("set", str(OUTPUT_XLSX), f"/{sheet}", "--prop", "freeze=A2", "--prop", "orientation=landscape", "--prop", "fitToPage=1x0", "--prop", "printTitleRows=1:1")
