@@ -366,8 +366,10 @@ def main() -> None:
             "props": {"value": "All statistics are formulas referencing numeric values in Clean; text NA is excluded."},
         },
         {"command": "set", "path": "/Benchmarks/A12", "props": {"value": "PRIMARY_POS"}},
-        {"command": "set", "path": "/Benchmarks/B12", "props": {"value": "2000-2004 max LPVERT"}},
-        {"command": "set", "path": "/Benchmarks/C12", "props": {"value": "2022-2026 max LPVERT"}},
+        {"command": "set", "path": "/Benchmarks/B12", "props": {"value": "2000-2004 Count LPVERT"}},
+        {"command": "set", "path": "/Benchmarks/C12", "props": {"value": "2000-2004 Mean LPVERT"}},
+        {"command": "set", "path": "/Benchmarks/D12", "props": {"value": "2022-2026 Count LPVERT"}},
+        {"command": "set", "path": "/Benchmarks/E12", "props": {"value": "2022-2026 Mean LPVERT"}},
     ])
 
     positions = sorted({
@@ -381,26 +383,29 @@ def main() -> None:
             "path": f"/Benchmarks/A{row_number}",
             "props": {"value": primary_pos},
         })
-        for column_letter, era in zip(("B", "C"), TARGET_ERAS):
+        for count_column, mean_column, era in zip(("B", "D"), ("C", "E"), TARGET_ERAS):
             first_row, last_row = position_ranges[(era, primary_pos)]
             clean_range = f"Clean!$M${first_row}:$M${last_row}"
-            formula = f'IF(COUNT({clean_range})=0,"",MAX({clean_range}))'
-            benchmark_operations.append({
-                "command": "set",
-                "path": f"/Benchmarks/{column_letter}{row_number}",
-                "props": {"formula": formula},
-            })
+            for column_letter, formula in (
+                (count_column, f"COUNT({clean_range})"),
+                (mean_column, f'IF(COUNT({clean_range})=0,"",AVERAGE({clean_range}))'),
+            ):
+                benchmark_operations.append({
+                    "command": "set",
+                    "path": f"/Benchmarks/{column_letter}{row_number}",
+                    "props": {"formula": formula},
+                })
 
     run_batch(benchmark_operations)
     run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", "ref=A1:M8", "--prop", "name=BenchmarkSummary", "--prop", "displayName=BenchmarkSummary", "--prop", "style=medium2")
-    run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", f"ref=A12:C{12 + len(positions)}", "--prop", "name=MaxVerticalByPosition", "--prop", "displayName=MaxVerticalByPosition", "--prop", "style=light2")
+    run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", f"ref=A12:E{12 + len(positions)}", "--prop", "name=MaxVerticalByPosition", "--prop", "displayName=MaxVerticalByPosition", "--prop", "style=light2")
 
     # Formatting and print setup. Values remain unchanged by these commands.
     widths = {
         "Raw": {"A": 10, "B": 24, "C": 10, "D": 10, "E": 10, "F": 10, "G": 10, "H": 12, "I": 12, "J": 10, "K": 10, "L": 12, "M": 12, "N": 10, "O": 10, "P": 10, "Q": 10, "R": 10, "S": 10, "T": 12, "U": 12},
         "Clean": {"A": 10, "B": 24, "C": 12, "D": 10, "E": 10, "F": 10, "G": 10, "H": 12, "I": 12, "J": 10, "K": 10, "L": 12, "M": 12, "N": 10, "O": 10, "P": 10, "Q": 10, "R": 10, "S": 10, "T": 12, "U": 12, "V": 12, "W": 16, "X": 12},
         "Decision_Log": {"A": 42, "B": 48, "C": 14, "D": 14, "E": 14, "F": 72, "G": 14},
-        "Benchmarks": {"A": 24, "B": 14, "C": 16, "D": 16, "E": 16, "F": 16, "G": 16, "H": 16, "I": 16, "J": 16, "K": 16, "L": 16, "M": 16},
+        "Benchmarks": {"A": 24, "B": 20, "C": 20, "D": 20, "E": 20, "F": 16, "G": 16, "H": 16, "I": 16, "J": 16, "K": 16, "L": 16, "M": 16},
     }
     for sheet, columns in widths.items():
         run("set", str(OUTPUT_XLSX), f"/{sheet}", "--prop", "freeze=A2", "--prop", "orientation=landscape", "--prop", "fitToPage=1x0", "--prop", "printTitleRows=1:1")
@@ -418,7 +423,10 @@ def main() -> None:
     run("set", str(OUTPUT_XLSX), "/Benchmarks/I2:I8", "--prop", "numberformat=0")
     run("set", str(OUTPUT_XLSX), "/Benchmarks/E2:H8", "--prop", "numberformat=0.00")
     run("set", str(OUTPUT_XLSX), "/Benchmarks/J2:M8", "--prop", "numberformat=0.00")
-    run("set", str(OUTPUT_XLSX), f"/Benchmarks/B13:C{12 + len(positions)}", "--prop", "numberformat=0.00")
+    run("set", str(OUTPUT_XLSX), f"/Benchmarks/B13:B{12 + len(positions)}", "--prop", "numberformat=0")
+    run("set", str(OUTPUT_XLSX), f"/Benchmarks/C13:C{12 + len(positions)}", "--prop", "numberformat=0.00")
+    run("set", str(OUTPUT_XLSX), f"/Benchmarks/D13:D{12 + len(positions)}", "--prop", "numberformat=0")
+    run("set", str(OUTPUT_XLSX), f"/Benchmarks/E13:E{12 + len(positions)}", "--prop", "numberformat=0.00")
 
     run("validate", str(OUTPUT_XLSX))
     print(f"Built {OUTPUT_XLSX} with {len(source_rows)} Raw rows, {len(clean_rows)} Clean rows, and {len(log_rows)} Decision_Log entries.")
