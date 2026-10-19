@@ -19,6 +19,7 @@ Groups: 2000-2004 against 2022-2026.
   decided by ("me" for my decisions, "agent" for a decision you make).
 - Every figure in Benchmarks is a formula, never a typed number.
 - Ask me before dropping a row or changing a value.
+- Never commit a file that `.gitignore` leaves out.
 
 ## Rules the workbook must pass
 - Rows in Clean equal rows in Raw minus every removal in the log.
