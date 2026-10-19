@@ -8,6 +8,7 @@ are written outside the project and are removed automatically after import.
 from __future__ import annotations
 
 import csv
+import json
 import shutil
 import subprocess
 import tempfile
@@ -24,6 +25,18 @@ def run(*args: str) -> None:
     """Run one OfficeCLI command and fail immediately if it fails."""
     command = [OFFICECLI, *args]
     subprocess.run(command, cwd=ROOT, check=True)
+
+
+def run_batch(operations: list[dict]) -> None:
+    """Send one JSON batch to OfficeCLI, preserving cross-sheet formulas."""
+    payload = json.dumps(operations)
+    subprocess.run(
+        [OFFICECLI, "batch", str(OUTPUT_XLSX)],
+        input=payload + "\n",
+        text=True,
+        cwd=ROOT,
+        check=True,
+    )
 
 
 def numeric_bar(value: str) -> str:
@@ -49,6 +62,19 @@ def era_for(year: int) -> str:
     if 2022 <= year <= 2026:
         return "2022-2026"
     return "2005-2021"
+
+
+ERA_ORDER = {"2000-2004": 0, "2005-2021": 1, "2022-2026": 2}
+TARGET_ERAS = ("2000-2004", "2022-2026")
+MEASURE_SPECS = (
+    ("Height", "D", "HGT", "mean"),
+    ("Weight", "E", "WGT", "mean"),
+    ("Wingspan", "H", "WNGSPN", "mean"),
+    ("Standing vertical", "L", "STNDVERT", "mean"),
+    ("Max vertical", "M", "LPVERT", "mean"),
+    ("Lane agility", "N", "LANE", "median"),
+    ("Sprint", "P", "SPRINT", "median"),
+)
 
 
 def rows_for_log(rows_before: int, because: str, where: str, what: str, decided_by: str) -> list[str]:
@@ -85,7 +111,7 @@ def main() -> None:
     clean_headers = source_headers + ["BAR_NUM", "PRIMARY_POS", "ERA"]
     clean_rows: list[dict[str, str]] = []
     invalid_rows: dict[str, int] = {}
-    danny_granger_row = None
+    danny_granger_seen = False
 
     for excel_row, source_row in enumerate(source_rows, start=2):
         row = dict(source_row)
@@ -105,7 +131,6 @@ def main() -> None:
             invalid_rows["beasley"] = excel_row
 
         bar_num = numeric_bar(row["BAR"])
-        row["BAR"] = bar_num
         row["BAR_NUM"] = bar_num
         row["PRIMARY_POS"] = primary_position(row["POS"])
         row["ERA"] = era_for(year)
@@ -113,7 +138,7 @@ def main() -> None:
         if row["PLAYER"] == "Granger, Danny" and year == 2005:
             if row["POS"] != "NA" or row["PRIMARY_POS"] != "none recorded":
                 raise ValueError("Danny Granger 2005 does not match the requested missing position rule")
-            danny_granger_row = excel_row
+            danny_granger_seen = True
 
         clean_rows.append(row)
 
@@ -123,11 +148,38 @@ def main() -> None:
         raise ValueError("ERA categories are incomplete")
     if any(row["PRIMARY_POS"] == "" for row in clean_rows):
         raise ValueError("A Clean row has no PRIMARY_POS")
-    bar_values = [float(row["BAR"]) for row in clean_rows if row["BAR"] != "NA"]
+    bar_values = [float(row["BAR_NUM"]) for row in clean_rows if row["BAR_NUM"] != "NA"]
     if not all(0.97 <= value <= 1.18 for value in bar_values):
         raise ValueError("A Clean BAR value falls outside 0.97 to 1.18")
-    if len(invalid_rows) != 2 or danny_granger_row is None:
+    if len(invalid_rows) != 2 or not danny_granger_seen:
         raise ValueError("Expected all three named records were not found")
+
+    # Put each ERA in one block, then sort within the block by PRIMARY_POS.
+    # YEAR and PLAYER make the result deterministic without changing the requested grouping.
+    clean_rows.sort(
+        key=lambda row: (
+            ERA_ORDER[row["ERA"]],
+            row["PRIMARY_POS"],
+            int(row["YEAR"]),
+            row["PLAYER"],
+        )
+    )
+    row_numbers = {
+        (row["PLAYER"], int(row["YEAR"])): index
+        for index, row in enumerate(clean_rows, start=2)
+    }
+    dunn_excel_row = row_numbers[("Dunn, Kris", 2016)]
+    beasley_excel_row = row_numbers[("Beasley, Malik", 2016)]
+    danny_granger_row = row_numbers[("Granger, Danny", 2005)]
+
+    era_ranges: dict[str, tuple[int, int]] = {}
+    position_ranges: dict[tuple[str, str], tuple[int, int]] = {}
+    for excel_row, row in enumerate(clean_rows, start=2):
+        era_ranges.setdefault(row["ERA"], (excel_row, excel_row))
+        era_ranges[row["ERA"]] = (era_ranges[row["ERA"]][0], excel_row)
+        position_key = (row["ERA"], row["PRIMARY_POS"])
+        position_ranges.setdefault(position_key, (excel_row, excel_row))
+        position_ranges[position_key] = (position_ranges[position_key][0], excel_row)
 
     log_headers = ["What", "Where", "Rows Before", "Rows After", "Rows Removed", "Because", "Decided By"]
     n_rows = len(source_rows)
@@ -192,6 +244,13 @@ def main() -> None:
         ),
         rows_for_log(
             n_rows,
+            "The user requested that Clean!BAR match the original Raw text; BAR_NUM remains the only numeric BAR field.",
+            "Clean!R2:R1750 restored from Raw!R2:R1750; Clean!V2:V1750 remains numeric",
+            "Restore Clean BAR to the original Raw text",
+            "me",
+        ),
+        rows_for_log(
+            n_rows,
             "Use the first POS code; for the requested 2005 Danny Granger record, POS is NA, so PRIMARY_POS is 'none recorded'.",
             f"Clean!W2:W1750; Danny Granger at Clean!W{danny_granger_row}",
             "Add PRIMARY_POS",
@@ -206,6 +265,13 @@ def main() -> None:
         ),
         rows_for_log(
             n_rows,
+            "The user requested one contiguous block for each ERA and PRIMARY_POS group so the benchmark ranges are auditable.",
+            "Clean!A2:X1750",
+            "Sort Clean by ERA, then PRIMARY_POS",
+            "me",
+        ),
+        rows_for_log(
+            n_rows,
             "No rows were dropped; Clean has the same 1,749 data rows as Raw after the requested cell-level corrections.",
             "Clean!A2:X1750 compared with Raw!A2:U1750",
             "Retain all prospect rows",
@@ -216,7 +282,7 @@ def main() -> None:
             "Required attribution: Kaggle dataset NBA Draft Combine, CC BY 4.0, https://www.kaggle.com/datasets/marcusfern/nba-draft-combine",
             "Decision_Log source record",
             "Record source attribution",
-            "agent",
+            "agent, approved",
         ),
     ]
 
@@ -239,6 +305,7 @@ def main() -> None:
         run("set", str(OUTPUT_XLSX), "/Sheet1", "--prop", "name=Raw")
         run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Clean")
         run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Decision_Log")
+        run("add", str(OUTPUT_XLSX), "/", "--type", "sheet", "--prop", "name=Benchmarks")
 
         # Raw is imported directly from the unchanged source CSV.
         run("import", str(OUTPUT_XLSX), "/Raw", "--file", str(SOURCE_CSV), "--header")
@@ -250,11 +317,90 @@ def main() -> None:
     run("add", str(OUTPUT_XLSX), "/Clean", "--type", "table", "--prop", "ref=A1:X1750", "--prop", "name=CleanData", "--prop", "displayName=CleanData", "--prop", "style=medium2")
     run("add", str(OUTPUT_XLSX), "/Decision_Log", "--type", "table", "--prop", f"ref=A1:G{len(log_rows) + 1}", "--prop", "name=DecisionLog", "--prop", "displayName=DecisionLog", "--prop", "style=light2")
 
+    # Build a formula-driven benchmark summary. Every statistic reads its values
+    # directly from the sorted Clean blocks, so the workbook remains auditable.
+    benchmark_operations: list[dict] = []
+
+    summary_headers = [
+        "Measure", "Clean column", "Center to read",
+        "2000-2004 Count", "2000-2004 Mean", "2000-2004 Median",
+        "2000-2004 P25", "2000-2004 P75",
+        "2022-2026 Count", "2022-2026 Mean", "2022-2026 Median",
+        "2022-2026 P25", "2022-2026 P75",
+    ]
+    for column_index, value in enumerate(summary_headers):
+        benchmark_operations.append({
+            "command": "set",
+            "path": f"/Benchmarks/{chr(ord('A') + column_index)}1",
+            "props": {"value": value},
+        })
+
+    for row_number, (label, column, _field, center) in enumerate(MEASURE_SPECS, start=2):
+        for column_letter, value in zip(("A", "B", "C"), (label, column, center)):
+            benchmark_operations.append({
+                "command": "set",
+                "path": f"/Benchmarks/{column_letter}{row_number}",
+                "props": {"value": value},
+            })
+        for era, start_column in zip(TARGET_ERAS, ("D", "I")):
+            first_row, last_row = era_ranges[era]
+            clean_range = f"Clean!${column}${first_row}:${column}${last_row}"
+            formulas = (
+                f"COUNT({clean_range})",
+                f"AVERAGE({clean_range})",
+                f"MEDIAN({clean_range})",
+                f"PERCENTILE.INC({clean_range},0.25)",
+                f"PERCENTILE.INC({clean_range},0.75)",
+            )
+            for offset, formula in enumerate(formulas):
+                benchmark_operations.append({
+                    "command": "set",
+                    "path": f"/Benchmarks/{chr(ord(start_column) + offset)}{row_number}",
+                    "props": {"formula": formula},
+                })
+
+    benchmark_operations.extend([
+        {
+            "command": "set",
+            "path": "/Benchmarks/A10",
+            "props": {"value": "All statistics are formulas referencing numeric values in Clean; text NA is excluded."},
+        },
+        {"command": "set", "path": "/Benchmarks/A12", "props": {"value": "PRIMARY_POS"}},
+        {"command": "set", "path": "/Benchmarks/B12", "props": {"value": "2000-2004 max LPVERT"}},
+        {"command": "set", "path": "/Benchmarks/C12", "props": {"value": "2022-2026 max LPVERT"}},
+    ])
+
+    positions = sorted({
+        row["PRIMARY_POS"]
+        for row in clean_rows
+        if row["ERA"] in TARGET_ERAS
+    })
+    for row_number, primary_pos in enumerate(positions, start=13):
+        benchmark_operations.append({
+            "command": "set",
+            "path": f"/Benchmarks/A{row_number}",
+            "props": {"value": primary_pos},
+        })
+        for column_letter, era in zip(("B", "C"), TARGET_ERAS):
+            first_row, last_row = position_ranges[(era, primary_pos)]
+            clean_range = f"Clean!$M${first_row}:$M${last_row}"
+            formula = f'IF(COUNT({clean_range})=0,"",MAX({clean_range}))'
+            benchmark_operations.append({
+                "command": "set",
+                "path": f"/Benchmarks/{column_letter}{row_number}",
+                "props": {"formula": formula},
+            })
+
+    run_batch(benchmark_operations)
+    run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", "ref=A1:M8", "--prop", "name=BenchmarkSummary", "--prop", "displayName=BenchmarkSummary", "--prop", "style=medium2")
+    run("add", str(OUTPUT_XLSX), "/Benchmarks", "--type", "table", "--prop", f"ref=A12:C{12 + len(positions)}", "--prop", "name=MaxVerticalByPosition", "--prop", "displayName=MaxVerticalByPosition", "--prop", "style=light2")
+
     # Formatting and print setup. Values remain unchanged by these commands.
     widths = {
         "Raw": {"A": 10, "B": 24, "C": 10, "D": 10, "E": 10, "F": 10, "G": 10, "H": 12, "I": 12, "J": 10, "K": 10, "L": 12, "M": 12, "N": 10, "O": 10, "P": 10, "Q": 10, "R": 10, "S": 10, "T": 12, "U": 12},
         "Clean": {"A": 10, "B": 24, "C": 12, "D": 10, "E": 10, "F": 10, "G": 10, "H": 12, "I": 12, "J": 10, "K": 10, "L": 12, "M": 12, "N": 10, "O": 10, "P": 10, "Q": 10, "R": 10, "S": 10, "T": 12, "U": 12, "V": 12, "W": 16, "X": 12},
         "Decision_Log": {"A": 42, "B": 48, "C": 14, "D": 14, "E": 14, "F": 72, "G": 14},
+        "Benchmarks": {"A": 24, "B": 14, "C": 16, "D": 16, "E": 16, "F": 16, "G": 16, "H": 16, "I": 16, "J": 16, "K": 16, "L": 16, "M": 16},
     }
     for sheet, columns in widths.items():
         run("set", str(OUTPUT_XLSX), f"/{sheet}", "--prop", "freeze=A2", "--prop", "orientation=landscape", "--prop", "fitToPage=1x0", "--prop", "printTitleRows=1:1")
@@ -268,6 +414,11 @@ def main() -> None:
         run("set", str(OUTPUT_XLSX), f"/{sheet}/A2:A1750", "--prop", "numberformat=0")
     run("set", str(OUTPUT_XLSX), "/Clean/R2:R1750", "--prop", "numberformat=0.000")
     run("set", str(OUTPUT_XLSX), "/Clean/V2:V1750", "--prop", "numberformat=0.000")
+    run("set", str(OUTPUT_XLSX), "/Benchmarks/D2:D8", "--prop", "numberformat=0")
+    run("set", str(OUTPUT_XLSX), "/Benchmarks/I2:I8", "--prop", "numberformat=0")
+    run("set", str(OUTPUT_XLSX), "/Benchmarks/E2:H8", "--prop", "numberformat=0.00")
+    run("set", str(OUTPUT_XLSX), "/Benchmarks/J2:M8", "--prop", "numberformat=0.00")
+    run("set", str(OUTPUT_XLSX), f"/Benchmarks/B13:C{12 + len(positions)}", "--prop", "numberformat=0.00")
 
     run("validate", str(OUTPUT_XLSX))
     print(f"Built {OUTPUT_XLSX} with {len(source_rows)} Raw rows, {len(clean_rows)} Clean rows, and {len(log_rows)} Decision_Log entries.")
