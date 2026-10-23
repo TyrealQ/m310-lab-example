@@ -1,0 +1,1 @@
+Second session: the t-test fits the question, but it shows only that the max vertical changed, not that prospects are more athletic on every combine measure. I followed: the t-test on the max vertical as it is, with the claim kept to the max vertical. Because: the max vertical is the measure this question uses, and the report does not claim more than that measure shows.

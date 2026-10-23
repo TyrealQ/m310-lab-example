@@ -6,7 +6,7 @@ Are today’s NBA Draft Combine prospects more athletic than prospects from twen
 
 ## Stakeholder and use case
 
-The stakeholder is the scouting director. The primary use case is a scouting reference that shows what a typical prospect looked like in each comparison era, with every measurement remaining interpretable in its original units. The initial comparison is pooled across all prospects; position-specific comparisons are out of scope until separately authorized.
+The stakeholder is the scouting director. The primary use case is a scouting reference that shows what a typical prospect looked like in each comparison era, with every measurement remaining interpretable in its original units. The initial comparison is pooled across all prospects; Benchmarks also gives the count and the mean max vertical by primary position in each era, to check the change in the mix of positions.
 
 ## Comparison groups
 
@@ -30,7 +30,7 @@ Every measurement in the file is in scope, organized into these categories:
 - Agility and speed: lane agility, shuttle, and three-quarter-court sprint
 - Strength: bench press repetitions
 
-The first code in `POS` is the prepared primary-position value. It may be retained for future analysis, but the initial workbook must keep all prospects together rather than compare positions.
+The first code in `POS` is the prepared primary-position value. It may be retained for future analysis, but the benchmarks keep all prospects together, with the table by primary position beside them.
 
 ## Data-quality and comparability requirements
 

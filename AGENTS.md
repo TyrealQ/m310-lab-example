@@ -4,6 +4,9 @@
 Question: Are today's prospects more athletic than those of twenty years ago?
 Stakeholder: a scouting director who compares a prospect's numbers with past classes.
 Groups: 2000-2004 against 2022-2026.
+Shape: two groups.
+Test: t-test on the max vertical (LPVERT), 2000-2004 against 2022-2026.
+The full plan is in PROJECT_BRIEF.md. Read it before planning a task.
 
 ## Data
 - nba_draft_combine.csv: NBA Draft Combine Measurements, 2000-2026 (Kaggle, CC BY 4.0).
@@ -24,5 +27,5 @@ Groups: 2000-2004 against 2022-2026.
 ## Rules the workbook must pass
 - Rows in Clean equal rows in Raw minus every removal in the log.
 - No weight and no shuttle is 0.
-- Every BAR value lies between 0.97 and 1.18.
+- Every BAR_NUM value lies between 0.97 and 1.18.
 - Every Clean row has a primary position and an era.
