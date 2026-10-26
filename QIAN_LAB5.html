@@ -492,7 +492,7 @@
     <details>
       <summary>Method note: code used to compute the yearly chart from Clean</summary>
       <div class="method-copy">
-        <p>The year series was computed from the workbook's <code>Clean</code> sheet by grouping numeric <code>LPVERT</code> values by <code>YEAR</code>. Text <code>NA</code> values were excluded. The comparison values and test result were checked from <code>Benchmarks</code>, <code>Lab5_Checks</code>, and <code>python3 run_tests.py</code>.</p>
+        <p>The year series was computed from the workbook's <code>Clean</code> sheet by grouping numeric <code>LPVERT</code> values by <code>YEAR</code>. Text <code>NA</code> values were excluded. The comparison values and test result were checked from <code>Benchmarks</code>, <code>Lab5_Checks</code>, and <code>python3 run_tests.py</code>. The dropdown figures for point guards in 2022-2026 were checked with COUNTIF and AVERAGEIF on the Clean sheet.</p>
         <pre><code>from collections import defaultdict
 from openpyxl import load_workbook
 
