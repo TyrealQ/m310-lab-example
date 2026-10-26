@@ -157,6 +157,8 @@
       gap: 30px;
     }
 
+    .focused-year-chart { grid-column: 2; }
+
     figure {
       min-width: 0;
       margin: 0;
@@ -187,6 +189,13 @@
       margin: 15px 0 0;
       color: var(--muted);
       font-size: .82rem;
+    }
+
+    .axis-note {
+      max-width: 70ch;
+      margin: 17px 0 0;
+      color: var(--muted);
+      font-size: .9rem;
     }
 
     .decision-grid {
@@ -279,6 +288,7 @@
       .answer,
       .chart-grid,
       .decision-grid { grid-template-columns: 1fr; }
+      .focused-year-chart { grid-column: 1; }
       .answer-stat { padding: 18px 0 0; border-top: 1px solid var(--line); border-left: 0; }
       .section-heading p { margin-top: 14px; }
       .limitation { padding: 25px 0 0; border-top: 1px solid var(--line); border-left: 0; }
@@ -315,7 +325,7 @@
     <section class="section" aria-labelledby="charts-title">
       <div class="section-heading">
         <h2 id="charts-title">The signal, in inches.</h2>
-        <p>Both charts use a zero-based vertical scale. That keeps the distance honest: the reader can see the level and the change without a cropped axis.</p>
+        <p>The first two charts start at zero, and the chart below them starts at 32 inches for the reason given under it.</p>
       </div>
 
       <div class="chart-grid">
@@ -339,6 +349,17 @@
             <desc id="year-chart-desc">A line chart showing mean maximum vertical for each combine year from 2000 through 2026, with a zero-based y-axis.</desc>
           </svg>
           <p class="chart-note">Vertical axis: mean maximum vertical (inches), starting at 0. Hover or focus a point for its value.</p>
+        </figure>
+
+        <figure class="focused-year-chart" aria-labelledby="focused-year-chart-title">
+          <figcaption>
+            <h3 id="focused-year-chart-title">Mean max vertical by combine year (inches), 32–37 inch axis</h3>
+            <p>Each point is the mean of numeric LPVERT values in that combine year.</p>
+          </figcaption>
+          <svg id="focusedYearChart" viewBox="0 0 1120 480" role="img" aria-labelledby="focused-year-chart-title focused-year-chart-desc">
+            <desc id="focused-year-chart-desc">A line chart showing mean maximum vertical for every combine year from 2000 through 2026. The vertical axis runs from 32 to 37 inches.</desc>
+          </svg>
+          <p class="axis-note"><strong>Scale note:</strong> the vertical axis intentionally runs from 32 to 37 inches rather than zero. That five-inch window makes year-to-year variation legible while keeping every plotted yearly mean in view.</p>
         </figure>
       </div>
     </section>
@@ -462,8 +483,42 @@ for year in sorted(by_year):
       });
     }
 
+    function drawFocusedYearChart() {
+      const svg = document.querySelector("#focusedYearChart");
+      const left = 86, right = 34, top = 24, bottom = 94;
+      const width = 1120 - left - right, height = 480 - top - bottom;
+      const x = index => left + (index / (yearData.length - 1)) * width;
+      const y = value => top + height - ((value - 32) / 5) * height;
+
+      [32, 33, 34, 35, 36, 37].forEach(tick => {
+        const position = y(tick);
+        svg.appendChild(make("line", { x1: left, y1: position, x2: left + width, y2: position, stroke: tick === 32 ? "#1b2b2a" : "#c9d0c8", "stroke-width": tick === 32 ? 1.5 : 1 }));
+        addText(svg, left - 14, position + 5, String(tick), { "text-anchor": "end", fill: "#586765", "font-size": 14 });
+      });
+
+      addText(svg, 18, top + height / 2, "Mean maximum vertical (inches)", { transform: `rotate(-90 18 ${top + height / 2})`, "text-anchor": "middle", fill: "#1b2b2a", "font-size": 15, "font-weight": 700 });
+      addText(svg, left + width / 2, 468, "Combine year", { "text-anchor": "middle", fill: "#1b2b2a", "font-size": 15, "font-weight": 700 });
+
+      yearData.forEach((item, index) => {
+        if (index % 2 === 0 || index === yearData.length - 1) {
+          const position = x(index);
+          addText(svg, position, top + height + 27, String(item[0]), { transform: `rotate(-45 ${position} ${top + height + 27})`, "text-anchor": "end", fill: "#586765", "font-size": 14 });
+        }
+      });
+
+      const path = yearData.map((item, index) => `${index === 0 ? "M" : "L"} ${x(index).toFixed(2)} ${y(item[1]).toFixed(2)}`).join(" ");
+      svg.appendChild(make("path", { d: path, fill: "none", stroke: "#d85d36", "stroke-width": 3.5, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+
+      yearData.forEach((item, index) => {
+        const point = make("circle", { cx: x(index), cy: y(item[1]), r: 5, fill: "#fffaf0", stroke: "#d85d36", "stroke-width": 2.25, tabindex: 0 });
+        point.appendChild(make("title", {}, `${item[0]}: ${item[1].toFixed(2)} inches`));
+        svg.appendChild(point);
+      });
+    }
+
     drawEraChart();
     drawYearChart();
+    drawFocusedYearChart();
   </script>
 </body>
 </html>
