@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mean max vertical by combine year | 32–37 inches</title>
+  <style>
+    :root {
+      --paper: #f5f1e8;
+      --ink: #1b2b2a;
+      --muted: #586765;
+      --line: #b8c0b9;
+      --accent: #d85d36;
+      --cream: #fffaf0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, "Avenir Next", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+
+    ::selection { background: var(--accent); color: var(--cream); }
+
+    main {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 58px 0 30px;
+      animation: arrive .7s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1,
+    h2 {
+      font-family: Baskerville, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-weight: 600;
+      letter-spacing: -.035em;
+      line-height: 1.05;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(3rem, 7vw, 5.7rem);
+    }
+
+    .lede {
+      max-width: 690px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 1.12rem;
+    }
+
+    .chart-wrap {
+      margin-top: 52px;
+      padding: 28px 0 20px;
+      border-top: 4px solid var(--accent);
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3.3vw, 2.8rem);
+    }
+
+    .chart-subtitle {
+      margin: 9px 0 22px;
+      color: var(--muted);
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .axis-note {
+      max-width: 70ch;
+      margin: 17px 0 0;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    a { color: #9f3f25; text-underline-offset: 3px; }
+
+    svg circle:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    @media (max-width: 720px) {
+      footer { display: block; }
+      footer p + p { margin-top: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      main { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Year by year, inside the 32–37 inch window.</h1>
+      <p class="lede">The yearly max-vertical chart from <code>QIAN_LAB5.html</code>, redrawn with a focused vertical axis so the differences among combine years are easier to read.</p>
+    </header>
+
+    <section class="chart-wrap" aria-labelledby="year-chart-title">
+      <h2 id="year-chart-title">Mean max vertical by combine year (inches), 32–37 inch axis</h2>
+      <p class="chart-subtitle">Each point is the mean of numeric LPVERT values in that combine year.</p>
+      <svg id="yearChart" viewBox="0 0 1120 480" role="img" aria-labelledby="year-chart-title year-chart-desc">
+        <desc id="year-chart-desc">A line chart showing mean maximum vertical for every combine year from 2000 through 2026. The vertical axis runs from 32 to 37 inches.</desc>
+      </svg>
+      <p class="axis-note"><strong>Scale note:</strong> the vertical axis intentionally runs from 32 to 37 inches rather than zero. That five-inch window makes year-to-year variation legible while keeping every plotted yearly mean in view.</p>
+    </section>
+
+    <footer>
+      <p>Source values copied from the yearly series in <code>QIAN_LAB5.html</code>.</p>
+      <p><a href="QIAN_LAB5.html">Back to the full report page</a></p>
+    </footer>
+  </main>
+
+  <script>
+    const yearData = [
+      [2000, 33.24], [2001, 34.09], [2002, 32.53], [2003, 33.63], [2004, 32.45],
+      [2005, 33.20], [2006, 34.25], [2007, 33.93], [2008, 33.73], [2009, 34.60],
+      [2010, 32.94], [2011, 34.79], [2012, 35.17], [2013, 36.07], [2014, 35.68],
+      [2015, 35.41], [2016, 36.22], [2017, 35.20], [2018, 36.15], [2019, 35.75],
+      [2020, 36.38], [2021, 36.85], [2022, 34.62], [2023, 35.82], [2024, 35.29],
+      [2025, 34.96], [2026, 36.54]
+    ];
+
+    const NS = "http://www.w3.org/2000/svg";
+    const make = (tag, attrs = {}, text = "") => {
+      const node = document.createElementNS(NS, tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    function addText(svg, x, y, text, attrs = {}) {
+      svg.appendChild(make("text", { x, y, ...attrs }, text));
+    }
+
+    function drawYearChart() {
+      const svg = document.querySelector("#yearChart");
+      const left = 86, right = 34, top = 24, bottom = 94;
+      const width = 1120 - left - right, height = 480 - top - bottom;
+      const x = index => left + (index / (yearData.length - 1)) * width;
+      const y = value => top + height - ((value - 32) / 5) * height;
+
+      [32, 33, 34, 35, 36, 37].forEach(tick => {
+        const position = y(tick);
+        svg.appendChild(make("line", { x1: left, y1: position, x2: left + width, y2: position, stroke: tick === 32 ? "#1b2b2a" : "#c9d0c8", "stroke-width": tick === 32 ? 1.5 : 1 }));
+        addText(svg, left - 14, position + 5, String(tick), { "text-anchor": "end", fill: "#586765", "font-size": 14 });
+      });
+
+      addText(svg, 18, top + height / 2, "Mean maximum vertical (inches)", { transform: `rotate(-90 18 ${top + height / 2})`, "text-anchor": "middle", fill: "#1b2b2a", "font-size": 15, "font-weight": 700 });
+      addText(svg, left + width / 2, 468, "Combine year", { "text-anchor": "middle", fill: "#1b2b2a", "font-size": 15, "font-weight": 700 });
+
+      yearData.forEach((item, index) => {
+        if (index % 2 === 0 || index === yearData.length - 1) {
+          const position = x(index);
+          addText(svg, position, top + height + 27, String(item[0]), { transform: `rotate(-45 ${position} ${top + height + 27})`, "text-anchor": "end", fill: "#586765", "font-size": 14 });
+        }
+      });
+
+      const path = yearData.map((item, index) => `${index === 0 ? "M" : "L"} ${x(index).toFixed(2)} ${y(item[1]).toFixed(2)}`).join(" ");
+      svg.appendChild(make("path", { d: path, fill: "none", stroke: "#d85d36", "stroke-width": 3.5, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+
+      yearData.forEach((item, index) => {
+        const point = make("circle", { cx: x(index), cy: y(item[1]), r: 5, fill: "#fffaf0", stroke: "#d85d36", "stroke-width": 2.25, tabindex: 0 });
+        point.appendChild(make("title", {}, `${item[0]}: ${item[1].toFixed(2)} inches`));
+        svg.appendChild(point);
+      });
+    }
+
+    drawYearChart();
+  </script>
+</body>
+</html>
