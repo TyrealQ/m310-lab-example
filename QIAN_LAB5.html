@@ -159,6 +159,70 @@
 
     .focused-year-chart { grid-column: 2; }
 
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(150px, .28fr) minmax(150px, .28fr) minmax(340px, 1fr);
+      gap: 18px 28px;
+      align-items: end;
+      margin-bottom: 30px;
+      padding: 17px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control label,
+    .readout-label {
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 34px 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    select:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .era-readout {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      padding: 9px 0 0 24px;
+      border-left: 1px solid var(--line);
+    }
+
+    .era-readout div,
+    .year-readout div {
+      display: grid;
+      gap: 4px;
+    }
+
+    .era-readout strong,
+    .year-readout strong {
+      color: var(--ink);
+      font-family: Baskerville, "Iowan Old Style", Georgia, serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+
     figure {
       min-width: 0;
       margin: 0;
@@ -196,6 +260,16 @@
       margin: 17px 0 0;
       color: var(--muted);
       font-size: .9rem;
+    }
+
+    .year-readout {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 15px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
     }
 
     .decision-grid {
@@ -289,10 +363,18 @@
       .chart-grid,
       .decision-grid { grid-template-columns: 1fr; }
       .focused-year-chart { grid-column: 1; }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .era-readout { grid-column: 1 / -1; padding: 16px 0 0; border-top: 1px solid var(--line); border-left: 0; }
       .answer-stat { padding: 18px 0 0; border-top: 1px solid var(--line); border-left: 0; }
       .section-heading p { margin-top: 14px; }
       .limitation { padding: 25px 0 0; border-top: 1px solid var(--line); border-left: 0; }
       footer p + p { margin-top: 8px; }
+    }
+
+    @media (max-width: 520px) {
+      .controls,
+      .year-readout { grid-template-columns: 1fr; }
+      .era-readout { grid-template-columns: 1fr 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -328,6 +410,33 @@
         <p>The first two charts start at zero, and the chart below them starts at 32 inches for the reason given under it.</p>
       </div>
 
+      <div class="controls" aria-label="Benchmark filters">
+        <div class="control">
+          <label for="eraSelect">Era</label>
+          <select id="eraSelect">
+            <option value="2000-2004">2000–2004</option>
+            <option value="2022-2026" selected>2022–2026</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="positionSelect">Position</label>
+          <select id="positionSelect">
+            <option value="ALL" selected>All positions</option>
+            <option value="C">C</option>
+            <option value="PF">PF</option>
+            <option value="PG">PG</option>
+            <option value="SF">SF</option>
+            <option value="SG">SG</option>
+          </select>
+        </div>
+        <div class="era-readout" aria-live="polite">
+          <div><span class="readout-label">Chosen era</span><strong id="selectedEraReadout">2022–2026</strong></div>
+          <div><span class="readout-label">Position</span><strong id="selectedPositionReadout">All positions</strong></div>
+          <div><span class="readout-label">Players with max vertical</span><strong id="selectedCountReadout">—</strong></div>
+          <div><span class="readout-label">Mean max vertical</span><strong id="selectedMeanReadout">—</strong></div>
+        </div>
+      </div>
+
       <div class="chart-grid">
         <figure aria-labelledby="era-chart-title">
           <figcaption>
@@ -347,6 +456,11 @@
           <svg id="yearChart" viewBox="0 0 1000 430" role="img" aria-labelledby="year-chart-title year-chart-desc">
             <desc id="year-chart-desc">A line chart showing mean maximum vertical for each combine year from 2000 through 2026, with a zero-based y-axis.</desc>
           </svg>
+          <div class="year-readout" id="yearReadout" role="status" aria-live="polite">
+            <div><span class="readout-label">Year</span><strong id="yearReadoutYear">Point to a year</strong></div>
+            <div><span class="readout-label">Mean max vertical</span><strong id="yearReadoutMean">—</strong></div>
+            <div><span class="readout-label">Players with max vertical</span><strong id="yearReadoutPlayers">—</strong></div>
+          </div>
           <p class="chart-note">Vertical axis: mean maximum vertical (inches), starting at 0. Hover or focus a point for its value.</p>
         </figure>
 
@@ -405,19 +519,62 @@ for year in sorted(by_year):
   </main>
 
   <script>
-    const eraData = [
-      { label: "2000–2004", value: 33.20, color: "#1c7771" },
-      { label: "2022–2026", value: 35.50, color: "#d85d36" }
-    ];
+    // Aggregated from QIAN_LAB4.xlsx / Clean using numeric LPVERT values.
+    const cleanStats = {
+      eras: ["2000-2004", "2022-2026"],
+      positions: ["C", "PF", "PG", "SF", "SG"],
+      byEraPosition: {
+        "2000-2004": {
+          "ALL": { players: 350, mean: 33.20 },
+          "C": { players: 48, mean: 30.11 },
+          "PF": { players: 101, mean: 32.21 },
+          "PG": { players: 70, mean: 34.83 },
+          "SF": { players: 64, mean: 34.03 },
+          "SG": { players: 67, mean: 34.40 }
+        },
+        "2022-2026": {
+          "ALL": { players: 299, mean: 35.50 },
+          "C": { players: 49, mean: 33.55 },
+          "PF": { players: 54, mean: 35.16 },
+          "PG": { players: 60, mean: 36.80 },
+          "SF": { players: 70, mean: 35.46 },
+          "SG": { players: 66, mean: 36.09 }
+        }
+      },
+      years: [
+        { year: 2000, players: 60, mean: 33.24 },
+        { year: 2001, players: 76, mean: 34.09 },
+        { year: 2002, players: 73, mean: 32.53 },
+        { year: 2003, players: 71, mean: 33.63 },
+        { year: 2004, players: 70, mean: 32.45 },
+        { year: 2005, players: 71, mean: 33.20 },
+        { year: 2006, players: 75, mean: 34.25 },
+        { year: 2007, players: 75, mean: 33.93 },
+        { year: 2008, players: 68, mean: 33.73 },
+        { year: 2009, players: 42, mean: 34.60 },
+        { year: 2010, players: 45, mean: 32.94 },
+        { year: 2011, players: 53, mean: 34.79 },
+        { year: 2012, players: 55, mean: 35.17 },
+        { year: 2013, players: 52, mean: 36.07 },
+        { year: 2014, players: 50, mean: 35.68 },
+        { year: 2015, players: 44, mean: 35.41 },
+        { year: 2016, players: 37, mean: 36.22 },
+        { year: 2017, players: 49, mean: 35.20 },
+        { year: 2018, players: 49, mean: 36.15 },
+        { year: 2019, players: 53, mean: 35.75 },
+        { year: 2020, players: 36, mean: 36.38 },
+        { year: 2021, players: 50, mean: 36.85 },
+        { year: 2022, players: 46, mean: 34.62 },
+        { year: 2023, players: 48, mean: 35.82 },
+        { year: 2024, players: 70, mean: 35.29 },
+        { year: 2025, players: 64, mean: 34.96 },
+        { year: 2026, players: 71, mean: 36.54 }
+      ]
+    };
 
-    const yearData = [
-      [2000, 33.24], [2001, 34.09], [2002, 32.53], [2003, 33.63], [2004, 32.45],
-      [2005, 33.20], [2006, 34.25], [2007, 33.93], [2008, 33.73], [2009, 34.60],
-      [2010, 32.94], [2011, 34.79], [2012, 35.17], [2013, 36.07], [2014, 35.68],
-      [2015, 35.41], [2016, 36.22], [2017, 35.20], [2018, 36.15], [2019, 35.75],
-      [2020, 36.38], [2021, 36.85], [2022, 34.62], [2023, 35.82], [2024, 35.29],
-      [2025, 34.96], [2026, 36.54]
-    ];
+    const yearData = cleanStats.years.map(item => [item.year, item.mean, item.players]);
+    let selectedEra = "2022-2026";
+    let selectedPosition = "ALL";
 
     const NS = "http://www.w3.org/2000/svg";
     const make = (tag, attrs = {}, text = "") => {
@@ -431,11 +588,29 @@ for year in sorted(by_year):
       svg.appendChild(make("text", { x, y, ...attrs }, text));
     }
 
+    function formatEra(era) {
+      return era.replace(/-/g, "–");
+    }
+
+    function formatPosition(position) {
+      return position === "ALL" ? "All positions" : position;
+    }
+
+    function renderEraReadout() {
+      const summary = cleanStats.byEraPosition[selectedEra][selectedPosition];
+      document.querySelector("#selectedEraReadout").textContent = formatEra(selectedEra);
+      document.querySelector("#selectedPositionReadout").textContent = formatPosition(selectedPosition);
+      document.querySelector("#selectedCountReadout").textContent = String(summary.players);
+      document.querySelector("#selectedMeanReadout").textContent = `${summary.mean.toFixed(2)} inches`;
+    }
+
     function drawEraChart() {
       const svg = document.querySelector("#eraChart");
       const left = 148, right = 28, top = 22, bottom = 55;
       const width = 720 - left - right, height = 330 - top - bottom;
       const x = value => left + (value / 40) * width;
+      const positionLabel = formatPosition(selectedPosition).toLowerCase();
+      svg.replaceChildren(make("desc", { id: "era-chart-desc" }, `A horizontal bar chart with a zero-based x-axis showing mean maximum vertical for ${positionLabel}. The selected era is highlighted.`));
       [0, 10, 20, 30, 40].forEach(tick => {
         const position = x(tick);
         svg.appendChild(make("line", { x1: position, y1: top, x2: position, y2: top + height, stroke: tick === 0 ? "#1b2b2a" : "#c9d0c8", "stroke-width": tick === 0 ? 1.5 : 1 }));
@@ -443,7 +618,11 @@ for year in sorted(by_year):
       });
       addText(svg, left + width / 2, 322, "Mean maximum vertical (inches)", { "text-anchor": "middle", fill: "#1b2b2a", "font-size": 14, "font-weight": 700 });
 
-      eraData.forEach((item, index) => {
+      cleanStats.eras.map(era => ({
+        label: formatEra(era),
+        value: cleanStats.byEraPosition[era][selectedPosition].mean,
+        color: era === selectedEra ? "#d85d36" : "#1c7771"
+      })).forEach((item, index) => {
         const y = top + 25 + index * 100;
         addText(svg, left - 15, y + 29, item.label, { "text-anchor": "end", fill: "#1b2b2a", "font-size": 16, "font-weight": 700 });
         svg.appendChild(make("rect", { x: left, y, width: x(item.value) - left, height: 58, rx: 2, fill: item.color }));
@@ -478,6 +657,14 @@ for year in sorted(by_year):
       yearData.forEach((item, index) => {
         const point = make("circle", { cx: x(index), cy: y(item[1]), r: 4.5, fill: "#fffaf0", stroke: "#d85d36", "stroke-width": 2, tabindex: 0 });
         point.appendChild(make("title", {}, `${item[0]}: ${item[1].toFixed(2)} inches`));
+        point.setAttribute("aria-label", `${item[0]}: ${item[1].toFixed(2)} inches, ${item[2]} players`);
+        const showReadout = () => {
+          document.querySelector("#yearReadoutYear").textContent = String(item[0]);
+          document.querySelector("#yearReadoutMean").textContent = `${item[1].toFixed(2)} inches`;
+          document.querySelector("#yearReadoutPlayers").textContent = String(item[2]);
+        };
+        point.addEventListener("pointerenter", showReadout);
+        point.addEventListener("focus", showReadout);
         svg.appendChild(point);
       });
     }
@@ -515,6 +702,18 @@ for year in sorted(by_year):
       });
     }
 
+    document.querySelector("#eraSelect").addEventListener("change", event => {
+      selectedEra = event.target.value;
+      renderEraReadout();
+      drawEraChart();
+    });
+    document.querySelector("#positionSelect").addEventListener("change", event => {
+      selectedPosition = event.target.value;
+      renderEraReadout();
+      drawEraChart();
+    });
+
+    renderEraReadout();
     drawEraChart();
     drawYearChart();
     drawFocusedYearChart();
