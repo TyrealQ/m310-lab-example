@@ -1,21 +1,18 @@
 # NBA Draft Combine Scouting Brief
 
+The question, the stakeholder, and the two eras are in AGENTS.md.
+
 ## Question
 
-Are today’s NBA Draft Combine prospects more athletic than prospects from twenty years ago? The project should help a scouting director compare an individual prospect’s combine numbers with typical prospects from past classes.
+The project should help compare an individual prospect’s combine numbers with typical prospects from past classes.
 
 ## Stakeholder and use case
 
-The stakeholder is the scouting director. The primary use case is a scouting reference that shows what a typical prospect looked like in each comparison era, with every measurement remaining interpretable in its original units. The initial comparison is pooled across all prospects; Benchmarks also gives the count and the mean max vertical by primary position in each era, to check the change in the mix of positions.
+The primary use case is a scouting reference that shows what a typical prospect looked like in each comparison era defined in AGENTS.md, with every measurement remaining interpretable in its original units. The initial comparison is pooled across all prospects; Benchmarks also gives the count and the mean max vertical by primary position in each era defined in AGENTS.md, to check the change in the mix of positions.
 
 ## Comparison groups
 
-Compare two five-class eras:
-
-- Early era: 2000–2004
-- Recent era: 2022–2026
-
-The analysis must use these year boundaries exactly. The full 2000–2026 file may be used for context or data-quality checks, but it must not change the two defined comparison groups.
+The analysis must use the year boundaries defined in AGENTS.md exactly. The full 2000–2026 file may be used for context or data-quality checks, but it must not change the comparison groups defined in AGENTS.md.
 
 ## Data scope
 
@@ -42,7 +39,7 @@ The first code in `POS` is the prepared primary-position value. It may be retain
 - Standing and maximum vertical results are missing for some prospects who skipped athletic tests.
 - Shuttle results begin in 2013 and are available for only about one-third of 2023.
 - Bench press is absent in 2014, 2016, and every year from 2020 onward; zero bench results are real results.
-- Coverage must be checked separately for every measurement in both comparison eras before declaring an era comparison valid.
+- Coverage must be checked separately for every measurement in both comparison eras defined in AGENTS.md before declaring an era comparison valid.
 
 ## Summary-statistic decision
 

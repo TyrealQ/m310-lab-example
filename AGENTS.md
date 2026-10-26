@@ -1,7 +1,7 @@
 # Combine athleticism benchmarks
 
 ## Project
-Question: Are today's prospects more athletic than those of twenty years ago?
+Question: Do today's prospects jump higher than those of twenty years ago?
 Stakeholder: a scouting director who compares a prospect's numbers with past classes.
 Groups: 2000-2004 against 2022-2026.
 Shape: two groups.
