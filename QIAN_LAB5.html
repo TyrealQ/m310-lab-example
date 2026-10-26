@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Max vertical | NBA Draft Combine</title>
+  <style>
+    :root {
+      --paper: #f5f1e8;
+      --paper-deep: #e9e2d3;
+      --ink: #1b2b2a;
+      --muted: #586765;
+      --line: #b8c0b9;
+      --accent: #d85d36;
+      --accent-dark: #9f3f25;
+      --teal: #1c7771;
+      --cream: #fffaf0;
+      --shadow: 0 16px 38px rgba(27, 43, 42, .10);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, "Avenir Next", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+
+    ::selection { background: var(--accent); color: var(--cream); }
+
+    .page-shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      animation: arrive .75s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      gap: 32px;
+      padding: 58px 0 34px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .masthead h1,
+    h2,
+    h3 {
+      font-family: Baskerville, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-weight: 600;
+      letter-spacing: -.035em;
+      line-height: 1.05;
+    }
+
+    .masthead h1 {
+      max-width: 760px;
+      margin: 0;
+      font-size: clamp(3.5rem, 8vw, 6.25rem);
+    }
+
+    .masthead-meta {
+      align-self: flex-end;
+      min-width: 190px;
+      color: var(--muted);
+      font-size: .78rem;
+      letter-spacing: .12em;
+      line-height: 1.45;
+      text-transform: uppercase;
+    }
+
+    .question {
+      max-width: 680px;
+      margin: 30px 0 0;
+      color: var(--muted);
+      font-size: 1.18rem;
+    }
+
+    .answer {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(230px, .75fr);
+      gap: 44px;
+      align-items: end;
+      margin: 52px 0 0;
+      padding: 27px 0 32px;
+      border-top: 4px solid var(--accent);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .answer h2,
+    .section-heading h2,
+    .recommendation h2,
+    .limitation h2 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.35rem);
+    }
+
+    .answer p,
+    .recommendation p,
+    .limitation p {
+      max-width: 72ch;
+      margin: 15px 0 0;
+    }
+
+    .answer-stat {
+      padding-left: 24px;
+      border-left: 1px solid var(--line);
+    }
+
+    .answer-stat strong {
+      display: block;
+      color: var(--accent-dark);
+      font-family: Baskerville, "Iowan Old Style", Georgia, serif;
+      font-size: clamp(2.5rem, 5vw, 4.2rem);
+      font-weight: 600;
+      letter-spacing: -.05em;
+      line-height: .95;
+    }
+
+    .answer-stat span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .section {
+      padding: 70px 0 0;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 25px;
+    }
+
+    .section-heading p {
+      max-width: 420px;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .86fr) minmax(0, 1.35fr);
+      gap: 30px;
+    }
+
+    figure {
+      min-width: 0;
+      margin: 0;
+      padding: 25px 0 18px;
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--line);
+    }
+
+    figcaption h3 {
+      margin: 0;
+      font-size: 1.55rem;
+    }
+
+    figcaption p {
+      margin: 7px 0 18px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .chart-note {
+      margin: 15px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(240px, .65fr);
+      gap: 30px;
+      align-items: start;
+      padding: 34px 0 0;
+    }
+
+    .recommendation {
+      padding: 30px;
+      background: var(--ink);
+      color: var(--cream);
+      box-shadow: var(--shadow);
+    }
+
+    .recommendation h2 { color: var(--cream); }
+    .recommendation p { color: #e3e9df; }
+
+    .recommendation .call {
+      margin-top: 23px;
+      color: #f4b49d;
+      font-family: Baskerville, "Iowan Old Style", Georgia, serif;
+      font-size: 1.55rem;
+      line-height: 1.25;
+    }
+
+    .limitation {
+      padding: 3px 0 0 24px;
+      border-left: 1px solid var(--line);
+    }
+
+    .limitation h2 { font-size: 2rem; }
+
+    details {
+      margin-top: 60px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 18px 0;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    summary:focus-visible,
+    a:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    .method-copy {
+      max-width: 75ch;
+      padding: 0 0 24px;
+      color: var(--muted);
+    }
+
+    pre {
+      max-width: 100%;
+      margin: 18px 0 0;
+      padding: 18px;
+      overflow-x: auto;
+      background: #182421;
+      color: #eff4e9;
+      font: .78rem/1.6 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      tab-size: 4;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 60px 0 30px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    a { color: var(--accent-dark); text-underline-offset: 3px; }
+
+    @media (max-width: 820px) {
+      .masthead,
+      .section-heading,
+      footer { display: block; }
+      .masthead-meta { margin-top: 22px; }
+      .answer,
+      .chart-grid,
+      .decision-grid { grid-template-columns: 1fr; }
+      .answer-stat { padding: 18px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+      .section-heading p { margin-top: 14px; }
+      .limitation { padding: 25px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+      footer p + p { margin-top: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .page-shell { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="masthead">
+      <div>
+        <h1>Recent prospects jump higher.</h1>
+        <p class="question">Question: Do today's prospects jump higher than those of twenty years ago?</p>
+      </div>
+      <p class="masthead-meta">NBA Draft Combine<br>Scouting director brief<br>Max vertical</p>
+    </header>
+
+    <section class="answer" aria-labelledby="answer-title">
+      <div>
+        <h2 id="answer-title">Yes—on the max vertical.</h2>
+        <p>Across the 350 early-era prospects and 299 recent-era prospects with a recorded result, the recent group averaged 35.50 inches versus 33.20 inches in the early group—a 2.30-inch difference. The two-sided Welch t-test gives a p-value less than .001.</p>
+      </div>
+      <div class="answer-stat" aria-label="Effect size">
+        <strong>0.64 SD</strong>
+        <span>Cohen's d · a meaningful shift for a max-vertical screen</span>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="charts-title">
+      <div class="section-heading">
+        <h2 id="charts-title">The signal, in inches.</h2>
+        <p>Both charts use a zero-based vertical scale. That keeps the distance honest: the reader can see the level and the change without a cropped axis.</p>
+      </div>
+
+      <div class="chart-grid">
+        <figure aria-labelledby="era-chart-title">
+          <figcaption>
+            <h3 id="era-chart-title">Mean max vertical by comparison era (inches)</h3>
+            <p>Recent-era prospects sit 2.30 inches above the early-era mean.</p>
+          </figcaption>
+          <svg id="eraChart" viewBox="0 0 720 330" role="img" aria-labelledby="era-chart-title era-chart-desc">
+            <desc id="era-chart-desc">A horizontal bar chart with a zero-based x-axis. The early-era mean is 33.20 inches and the recent-era mean is 35.50 inches.</desc>
+          </svg>
+          <p class="chart-note">Horizontal axis: mean maximum vertical (inches), starting at 0.</p>
+        </figure>
+
+        <figure aria-labelledby="year-chart-title">
+          <figcaption>
+            <h3 id="year-chart-title">Mean max vertical by combine year (inches)</h3>
+            <p>Each point is the mean of numeric LPVERT values in that combine year.</p>
+          </figcaption>
+          <svg id="yearChart" viewBox="0 0 1000 430" role="img" aria-labelledby="year-chart-title year-chart-desc">
+            <desc id="year-chart-desc">A line chart showing mean maximum vertical for each combine year from 2000 through 2026, with a zero-based y-axis.</desc>
+          </svg>
+          <p class="chart-note">Vertical axis: mean maximum vertical (inches), starting at 0. Hover or focus a point for its value.</p>
+        </figure>
+      </div>
+    </section>
+
+    <section class="decision-grid" aria-labelledby="recommendation-title">
+      <div class="recommendation">
+        <h2 id="recommendation-title">Recommendation</h2>
+        <p class="call">Raise the max-vertical benchmark for first-pass screening—but keep it as one input, not a total athleticism score.</p>
+        <p>The 0.64-standard-deviation shift is large enough to change a max-vertical screen. It is not large enough to make a final scouting decision by itself, especially when the project question is deliberately kept to this one measure.</p>
+      </div>
+      <aside class="limitation" aria-labelledby="limitation-title">
+        <h2 id="limitation-title">Limitation</h2>
+        <p>This result cannot rule out a different pattern on the other combine measures. The t-test shows that max vertical changed; it does not show that prospects are more athletic on every measure.</p>
+      </aside>
+    </section>
+
+    <details>
+      <summary>Method note: code used to compute the yearly chart from Clean</summary>
+      <div class="method-copy">
+        <p>The year series was computed from the workbook's <code>Clean</code> sheet by grouping numeric <code>LPVERT</code> values by <code>YEAR</code>. Text <code>NA</code> values were excluded. The comparison values and test result were checked from <code>Benchmarks</code>, <code>Lab5_Checks</code>, and <code>python3 run_tests.py</code>.</p>
+        <pre><code>from collections import defaultdict
+from openpyxl import load_workbook
+
+workbook = load_workbook("QIAN_LAB4.xlsx", read_only=True, data_only=True)
+sheet = workbook["Clean"]
+headers = {value: index for index, value in enumerate(next(sheet.iter_rows(values_only=True)))}
+by_year = defaultdict(list)
+for row in sheet.iter_rows(min_row=2, values_only=True):
+    year = row[headers["YEAR"]]
+    lpvert = row[headers["LPVERT"]]
+    if isinstance(year, (int, float)) and isinstance(lpvert, (int, float)):
+        by_year[int(year)].append(float(lpvert))
+
+for year in sorted(by_year):
+    values = by_year[year]
+    print(f"{year}: n={len(values)}, mean_LPVERT={sum(values) / len(values):.2f} inches")</code></pre>
+      </div>
+    </details>
+
+    <footer>
+      <p>Source: NBA Draft Combine, Kaggle, CC BY 4.0.</p>
+      <p><a href="https://www.kaggle.com/datasets/marcusfern/nba-draft-combine">Dataset source</a> · Prepared for scouting review</p>
+    </footer>
+  </main>
+
+  <script>
+    const eraData = [
+      { label: "2000–2004", value: 33.20, color: "#1c7771" },
+      { label: "2022–2026", value: 35.50, color: "#d85d36" }
+    ];
+
+    const yearData = [
+      [2000, 33.24], [2001, 34.09], [2002, 32.53], [2003, 33.63], [2004, 32.45],
+      [2005, 33.20], [2006, 34.25], [2007, 33.93], [2008, 33.73], [2009, 34.60],
+      [2010, 32.94], [2011, 34.79], [2012, 35.17], [2013, 36.07], [2014, 35.68],
+      [2015, 35.41], [2016, 36.22], [2017, 35.20], [2018, 36.15], [2019, 35.75],
+      [2020, 36.38], [2021, 36.85], [2022, 34.62], [2023, 35.82], [2024, 35.29],
+      [2025, 34.96], [2026, 36.54]
+    ];
+
+    const NS = "http://www.w3.org/2000/svg";
+    const make = (tag, attrs = {}, text = "") => {
+      const node = document.createElementNS(NS, tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    function addText(svg, x, y, text, attrs = {}) {
+      svg.appendChild(make("text", { x, y, ...attrs }, text));
+    }
+
+    function drawEraChart() {
+      const svg = document.querySelector("#eraChart");
+      const left = 148, right = 28, top = 22, bottom = 55;
+      const width = 720 - left - right, height = 330 - top - bottom;
+      const x = value => left + (value / 40) * width;
+      [0, 10, 20, 30, 40].forEach(tick => {
+        const position = x(tick);
+        svg.appendChild(make("line", { x1: position, y1: top, x2: position, y2: top + height, stroke: tick === 0 ? "#1b2b2a" : "#c9d0c8", "stroke-width": tick === 0 ? 1.5 : 1 }));
+        addText(svg, position, top + height + 25, String(tick), { "text-anchor": "middle", fill: "#586765", "font-size": 14 });
+      });
+      addText(svg, left + width / 2, 322, "Mean maximum vertical (inches)", { "text-anchor": "middle", fill: "#1b2b2a", "font-size": 14, "font-weight": 700 });
+
+      eraData.forEach((item, index) => {
+        const y = top + 25 + index * 100;
+        addText(svg, left - 15, y + 29, item.label, { "text-anchor": "end", fill: "#1b2b2a", "font-size": 16, "font-weight": 700 });
+        svg.appendChild(make("rect", { x: left, y, width: x(item.value) - left, height: 58, rx: 2, fill: item.color }));
+        addText(svg, x(item.value) + 10, y + 37, item.value.toFixed(2), { fill: "#1b2b2a", "font-size": 18, "font-weight": 700 });
+      });
+    }
+
+    function drawYearChart() {
+      const svg = document.querySelector("#yearChart");
+      const left = 72, right = 28, top = 18, bottom = 80;
+      const width = 1000 - left - right, height = 430 - top - bottom;
+      const x = index => left + (index / (yearData.length - 1)) * width;
+      const y = value => top + height - (value / 40) * height;
+
+      [0, 10, 20, 30, 40].forEach(tick => {
+        const position = y(tick);
+        svg.appendChild(make("line", { x1: left, y1: position, x2: left + width, y2: position, stroke: tick === 0 ? "#1b2b2a" : "#c9d0c8", "stroke-width": tick === 0 ? 1.5 : 1 }));
+        addText(svg, left - 12, position + 5, String(tick), { "text-anchor": "end", fill: "#586765", "font-size": 13 });
+      });
+      addText(svg, 16, top + height / 2, "Mean maximum vertical (inches)", { transform: `rotate(-90 16 ${top + height / 2})`, "text-anchor": "middle", fill: "#1b2b2a", "font-size": 14, "font-weight": 700 });
+      addText(svg, left + width / 2, 423, "Combine year", { "text-anchor": "middle", fill: "#1b2b2a", "font-size": 14, "font-weight": 700 });
+
+      yearData.forEach((item, index) => {
+        if (index % 2 === 0 || index === yearData.length - 1) {
+          const position = x(index);
+          addText(svg, position, top + height + 24, String(item[0]), { transform: `rotate(-45 ${position} ${top + height + 24})`, "text-anchor": "end", fill: "#586765", "font-size": 13 });
+        }
+      });
+
+      const path = yearData.map((item, index) => `${index === 0 ? "M" : "L"} ${x(index).toFixed(2)} ${y(item[1]).toFixed(2)}`).join(" ");
+      svg.appendChild(make("path", { d: path, fill: "none", stroke: "#d85d36", "stroke-width": 3, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+      yearData.forEach((item, index) => {
+        const point = make("circle", { cx: x(index), cy: y(item[1]), r: 4.5, fill: "#fffaf0", stroke: "#d85d36", "stroke-width": 2, tabindex: 0 });
+        point.appendChild(make("title", {}, `${item[0]}: ${item[1].toFixed(2)} inches`));
+        svg.appendChild(point);
+      });
+    }
+
+    drawEraChart();
+    drawYearChart();
+  </script>
+</body>
+</html>
